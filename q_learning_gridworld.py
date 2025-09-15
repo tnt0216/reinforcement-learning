@@ -27,16 +27,50 @@ Givens:
 
 class Environment:
 
-    def __init__(self):
+    def __init__(self, config):
         """
         Initializes the environment parameters.
         
         Args:
+            config (dict): Contains:
+                - training_parameters (dict): Contains agent parameters for learning
+                - state_conditions (dict): Contains state positions and condition (dirty/clean)
+                - rendering_parameters (dict): Contains constants for PyGame rendering
         
-        Returns:
+        Returns: None
         """
-        pass
+        self.learning_rate = config["training"]["learning_rate"]
+        self.discount_factor = config["training"]["discount_factor"]
+        self.state_conditions = config["states"]
+        self.current_state = (0, 0)  # initializing the current state (starting state)
+        self.actions = ["up", "down", "right", "left", "clean"]
     
+    def valid_actions(self, state):
+        """
+        Specifies which actions the agent can choose in a given state.
+        
+        Args:
+            state (tuple): A 2D tuple (x, y) to indicate what the current state is
+        
+        Returns: 
+            valid_actions (list): Contains the valid actions that can be taken in the current state
+        """
+        x, y = state
+        valid_actions = []  # Initializing a list to store the valid actions for the specific state
+
+        if x == 0:
+            valid_actions.append("right")
+        if x == 1:
+            valid_actions.append("left")
+        if y == 0: 
+            valid_actions.append("up")
+        if y == 1:
+            valid_actions.append("down")
+
+        valid_actions.append("clean")  # This is always valid
+
+        return valid_actions
+
     def next_state(self):
         """
         Computes the next state given the currect state and action.
@@ -47,9 +81,9 @@ class Environment:
         """
         pass
 
-    def valid_actions(self):
+    def step(self):
         """
-        Specifies which actions the agent can choose in a given state.
+        Applies the agent's actions and updates the environment.
         
         Args:
         
@@ -60,16 +94,6 @@ class Environment:
     def reset(self):
         """
         Resets the environment to the initial state.
-        
-        Args:
-        
-        Returns:
-        """
-        pass
-
-    def step(self):
-        """
-        Applies the agent's actions and updates the environment.
         
         Args:
         
@@ -206,10 +230,9 @@ def main():
     
     Returns:
     """
-    
-    config = configurations()
 
-    pass
+    config = configurations()
+    env = Environment(config)
 
 
 if __name__ == "__main__":
