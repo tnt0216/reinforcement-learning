@@ -97,7 +97,6 @@ class Environment:
         """
         pass
 
-
 class QLearningAgent:
     def __init__(self):
         """
@@ -156,11 +155,47 @@ def configurations():
     """
     Returns default configuration parameters.
     
-    Args:
+    Args: None
     
     Returns:
+        config_dict (dict): Contains:
+            - training_parameters (dict): Contains agent parameters for learning
+            - state_conditions (dict): Contains state positions and condition (dirty/clean)
+            - rendering_parameters (dict): Contains constants for PyGame rendering
     """
-    pass
+
+    # Defining Constants - RL agent
+    training_parameters = {
+        "num_episodes": 1000,  # Number of training episodes
+        "learning_rate": 0.5,  # alpha
+        "discount_factor": 0.9,  # gamma
+        "epsilon":  0.8  # used for e-greedy policy (~1 favors exploration and ~0 favors exploitation)
+    
+    }
+
+    # Initial state conditions for each cell shown in the Pygame rendering using x, y coordinates for
+    # better scalability
+    state_conditions = {
+        (0, 1): "dirty",  # State A
+        (1, 1): "clean",  # State B
+        (0, 0): "dirty",  # State C
+        (1, 0): "clean",  # State D
+    }
+
+    # Defining Constants - PyGame Rendering
+    rendering_parameters = {
+        "screen_width": 500,
+        "screen_height": 500
+    }
+
+    # Creating a wrapped dictionary to return
+    config_dict = {
+        "training": training_parameters,
+        "states": state_conditions,
+        "rendering": rendering_parameters
+    }
+
+    return config_dict
 
 
 def main():
@@ -171,6 +206,9 @@ def main():
     
     Returns:
     """
+    
+    config = configurations()
+
     pass
 
 
