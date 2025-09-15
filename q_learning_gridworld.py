@@ -23,92 +23,157 @@ Givens:
 """
 
 # Imported Packages
-import pygame
 
 
-def drawGrid(screen, screen_width, screen_height, state_conditions):
+class Environment:
+
+    def __init__(self):
+        """
+        Initializes the environment parameters.
+        
+        Args:
+        
+        Returns:
+        """
+        pass
+    
+    def next_state(self):
+        """
+        Computes the next state given the currect state and action.
+        
+        Args:
+        
+        Returns:
+        """
+        pass
+
+    def valid_actions(self):
+        """
+        Specifies which actions the agent can choose in a given state.
+        
+        Args:
+        
+        Returns:
+        """
+        pass
+
+    def reset(self):
+        """
+        Resets the environment to the initial state.
+        
+        Args:
+        
+        Returns:
+        """
+        pass
+
+    def step(self):
+        """
+        Applies the agent's actions and updates the environment.
+        
+        Args:
+        
+        Returns:
+        """
+        pass
+
+    def drawGrid(self):
+        """
+        Draws the GridWorld (optional visualization).
+        
+        Args:
+        
+        Returns:
+        """
+        pass
+
+    def render(self):
+        """
+        Renders the GridWorld using a PyGame screen.
+        
+        Args:
+        
+        Returns:
+        """
+        pass
+
+
+class QLearningAgent:
+    def __init__(self):
+        """
+        Initializes agent parameters and Q-Table.
+        
+        Args:
+        
+        Returns:
+        """
+        pass
+
+    def epsilon_greedy(self):
+        """
+        Implements epsilon-greedy policy to dictate the agent's actions.
+
+        Args:
+
+        Returns:
+        """
+        pass
+        
+    def update_q_value(self):
+        """
+        Updates Q-table after agent actions using the Q-function update rule.
+        
+        Args:
+        
+        Returns:
+        """
+        pass
+
+
+def train_agent():
     """
-    This helper function draws the grid, updates visuals, and renders the state space the agent 
-    interacts with.
+    Training loop where the agent updates the Q-Table.
+    
+    Args:
+    
+    Returns:
     """
+    pass
 
-    # Constants
-    black = (0, 0, 0)
-    white = (200, 200, 200)
-    pygame.font.init()  # Need to add font to screen to signal state condition
-    my_font = pygame.font.SysFont("Arial", 24)
-    block_size = screen_width // 2 # Dividing the screen into a 2x2 (Divides cells per pixel)
 
-    # Dictionary to establish text placement for state conditions on gridworld
-    cell_positions = {
-        "A": (0, 0),
-        "B": (block_size, 0),
-        "C": (0, block_size),
-        "D": (block_size, block_size)
-    }
+def evaluate_agent():
+    """
+    Evaluation loop (no learning occurs).
+    
+    Args:
+    
+    Returns:
+    """
+    pass
 
-    screen.fill(white)
 
-    # This loop creates the individual cells using the Rect pygame object - stores rectangular coordinates
-    for x in range(0, screen_width, block_size):
-        for y in range(0, screen_height, block_size):
-            rect = pygame.Rect(x, y, block_size, block_size)
-            pygame.draw.rect(screen, black, rect, 1)
-
-    text_surfs = {}
-
-    # This loop renders the state conditions
-    for key, value in state_conditions.items():
-        surf = my_font.render(str(value), True, black)
-        rect = surf.get_rect()
-
-        x, y = cell_positions[key]
-        rect.center = (x + block_size // 2, y + block_size // 2)
-
-        text_surfs[key] = (surf, rect)
-
-    return text_surfs
+def configurations():
+    """
+    Returns default configuration parameters.
+    
+    Args:
+    
+    Returns:
+    """
+    pass
 
 
 def main():
-
-    # Defining Constants - RL agent
-    alpha = 0.5  # Learning rate 
-    gamma = 0.9  # Discount factor 
-    actions = ["up", "down", "right", "left", "clean"]  # Actions that the agent can take within the environment
+    """
+    Loads configurations, creates the environment and agent, and calls to either train or evaluate.
     
-    # Initial state conditions for each cell shown in the Pygame rendering
-    state_conditions = {
-        "A": "dirty",
-        "B": "clean",
-        "C": "dirty",
-        "D": "clean"
-    }
-
-    # Defining Constants - PyGame Rendering
-    screen_width = 500
-    screen_height = 500
-
-    # Initializing a simple 2x2 grid in Pygame for visualization
-    screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("Q-Learning - 4 Room House Problem")
-
-    # Looping to update using the drawGrid helper function
-    running = True
-    while running:
-        text_surfs = drawGrid(screen, screen_width, screen_height, state_conditions)
-
-        for surf, rect in text_surfs.values():
-            screen.blit(surf, rect)
-        pygame.display.flip()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
+    Args:
+    
+    Returns:
+    """
+    pass
 
 
 if __name__ == "__main__":
     main()
-
-
         
