@@ -23,7 +23,8 @@ Givens:
 """
 
 # Imported Packages
-
+import copy
+from frozendict import frozendict
 
 class Environment:
 
@@ -37,12 +38,19 @@ class Environment:
                 - state_conditions (dict): Contains state positions and condition (dirty/clean)
                 - rendering_parameters (dict): Contains constants for PyGame rendering
         
-        Returns: None
+        Returns: 
+            None
         """
+        
         self.learning_rate = config["training"]["learning_rate"]
         self.discount_factor = config["training"]["discount_factor"]
-        self.state_conditions = config["states"]
-        self.current_state = (0, 0)  # initializing the current state (starting state)
+
+        self.initial_state_conditions = frozendict(config["states"])  # This dict does not change (frozendict = immutable)
+        self.state_conditions = copy.deepcopy(self.initial_state_conditions)  # This dict will change so we need a copy
+
+        self.start_state = (0, 0)
+        self.current_state = self.start_state  # initializing the current state = start state
+        
         self.actions = ["up", "down", "right", "left", "clean"]
     
     def valid_actions(self, state):
@@ -55,6 +63,7 @@ class Environment:
         Returns: 
             valid_actions (list): Contains the valid actions that can be taken in the current state
         """
+
         x, y = state
         valid_actions = []  # Initializing a list to store the valid actions for the specific state
 
@@ -71,35 +80,93 @@ class Environment:
 
         return valid_actions
 
-    def next_state(self):
+    def next_state(self, state, action):
         """
-        Computes the next state given the currect state and action.
+        Computes the next state given the current state and action.
         
         Args:
-        
+            state (tuple): A 2D tuple (x, y) to indicate what the current state is
+            action (str): Action chosen by the agent
+            
         Returns:
+            next_state (tuple): A 2D tuple (x, y) for the next state given action 
         """
-        pass
 
-    def step(self):
+        x, y = state
+
+        # If action is within valid_action list then update state tuple
+        if action in self.valid_actions(state):
+            if action == "up":
+                y = y + 1
+            elif action == "down":
+                y = y - 1
+            elif action == "right":
+                x = x + 1
+            elif action == "left":
+                x = x - 1
+            # For cleaning action state is unchanged
+            
+        else:  # If action is not in valid_action list - display error
+            raise ValueError("Action invalid in state: {state}")  # This will likely be unneccessary after writing agent class
+
+        return (x, y)
+
+    def step(self, action):
         """
         Applies the agent's actions and updates the environment.
         
         Args:
+            action (str): Action chosen by the agent
         
         Returns:
+            tuple:
+                next_state (tuple): A 2D tuple (x, y) for the next state given action 
+                reward (int): The benefit/penalty for taking the action that drives agent learning
+                done (bool): A boolean to indicate if the episode is done (if true - reset) 
         """
-        pass
+
+        # Grabbing the state condition for the cell the agent is currently in 
+        current_condition = self.state_conditions[self.current_state]
+
+        # Defining rewards stucture (cleaning dirty = +10, cleaning clean = -5, moving = 0)
+        if action == "clean":
+            if current_condition == "dirty":
+                current_condition = "clean"  # Updating the current state's condition
+                reward = 10
+            else:  # Cell is already clean
+                reward = -5
+        else:  # Moving around
+            reward = 0
+
+        # Getting the next state by calling to the next_state helper function
+        next_state = self.next_state(self.current_state, action)
+        self.current_state = next_state  # Updating the current state
+
+        # Checking for terminal state (all state_conditions == "clean")
+        done = False
+        if all(values == "clean" for values in self.state_conditions.values()):
+            done = True
+
+        return next_state, reward, done
 
     def reset(self):
         """
         Resets the environment to the initial state.
         
         Args:
+            None
         
         Returns:
+            current_state (tuple): A 2D tuple (x, y) for the current state the agent is in
+            state_conditions (dict): Contains state positions and condition (dirty/clean)
         """
-        pass
+
+        # Resetting the current state and the state conditions to initialization value for next episode
+        self.current_state = self.start_state
+        for key in self.state_conditions[key]:
+            self.state_conditions[key] = self.initial_state_conditions[key]
+
+        return self.current_state, self.state_conditions
 
     def drawGrid(self):
         """
