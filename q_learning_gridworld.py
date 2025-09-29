@@ -207,7 +207,7 @@ class QLearningAgent:
         self.states = config["state_to_index"]
         self.actions = actions
 
-        self.q_table = np.zeros((len(self.states), len(self.actions)), dtype=int)  # This needs to be a matrix of size (# states) x (# actions)
+        self.q_table = np.zeros((len(self.states), len(self.actions)), dtype=float)  # This needs to be a matrix of size (# states) x (# actions)
 
     def epsilon_greedy(self, env, current_state):
         """
@@ -251,8 +251,13 @@ class QLearningAgent:
         next_state_index = self.states[next_state]
         action_index = self.actions[action]
 
+        best_next_q = np.max(self.q_table[next_state_index])
+        self.q_table[state_index, action_index] += self.learning_rate * (
+        reward + self.discount_factor * best_next_q - self.q_table[state_index, action_index]
+        )
+
         # Bellman Optimality Equation
-        self.q_table[state_index, action_index] = self.q_table[state_index, action_index] + self.learning_rate*(reward + self.discount_factor*self.q_table[next_state_index].argmax() - self.q_table[state_index, action_index])
+        # self.q_table[state_index, action_index] = self.q_table[state_index, action_index] + self.learning_rate*(reward + self.discount_factor*self.q_table[next_state_index].argmax() - self.q_table[state_index, action_index])
 
         return self.q_table
 
@@ -274,6 +279,7 @@ def train_agent(env, agent, num_episodes, writer):
     all_episode_data = pd.DataFrame()
 
     cumulative_reward = 0  # Initializing the cumulative reward during training
+    max_steps = 100  # Initializing max_steps to prevent destabilizing negative rewards
 
     # Looping for training episodes 
     for episode in range(num_episodes):
@@ -284,10 +290,11 @@ def train_agent(env, agent, num_episodes, writer):
         episode_reward = 0  # Initializing the episode reward during training
         num_steps = 0  # Intializing a counter for number of steps for an episode
 
-        while not done:
+        while not done and num_steps < max_steps:
 
             action = agent.epsilon_greedy(env, current_state)  # Choosing action
             next_state, reward, done = env.step(action)  # Taking action, observing next state, reward
+            
             q_table = agent.update_q_value(current_state, action, reward, next_state)  # Updating Q-Value
             current_state = next_state  # Moving to the next state
 
@@ -303,7 +310,7 @@ def train_agent(env, agent, num_episodes, writer):
         all_episode_data = pd.concat([all_episode_data, episode_data.to_frame().T], keys=columns, ignore_index=True)
 
         # Logging metrics to tensorboard for better visualization
-        writer.add_scalar("Reward/Episode", cumulative_reward, episode)
+        writer.add_scalar("Reward/Episode", episode_reward, episode)
         writer.add_scalar("Steps/Episode", num_steps, episode)
 
     # Calling to training_eval function
@@ -346,7 +353,7 @@ def configurations():
         "learning_rate": 0.5,  # alpha
         "discount_factor": 0.9,  # gamma
         "epsilon":  0.8  # used for e-greedy policy (~1 favors exploration and ~0 favors exploitation)
-    
+        # "epsilon_decay": 0.001
     }
 
     # Initial state conditions for each cell shown in the Pygame rendering using x, y coordinates for
