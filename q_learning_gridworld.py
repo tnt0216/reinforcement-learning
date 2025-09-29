@@ -23,11 +23,11 @@ Givens:
 """
 
 # Imported Packages
-import copy
 import random
 import numpy as np
 import pandas as pd
 import warnings
+from torch.utils.tensorboard import SummaryWriter
 from frozendict import frozendict
 
 class Environment:
@@ -254,8 +254,10 @@ class QLearningAgent:
         # Bellman Optimality Equation
         self.q_table[state_index, action_index] = self.q_table[state_index, action_index] + self.learning_rate*(reward + self.discount_factor*self.q_table[next_state_index].argmax() - self.q_table[state_index, action_index])
 
+        return self.q_table
 
-def train_agent(env, agent, num_episodes):
+
+def train_agent(env, agent, num_episodes, writer):
     """
     Training loop where the agent updates the Q-Table.
     
@@ -267,10 +269,6 @@ def train_agent(env, agent, num_episodes):
     Returns:
         training_data.csv: Contains the training data for epsiode, num_steps, episode_reward, and cumulative_reward
     """
-
-    # Initializing a Pandas dataframe to log training data
-    #all_episode_data = pd.DataFrame({'Episode': 0, 'Num Steps': 0, 'Episode Reward': 0,
-    #                                 'Cumulative Reward' : 0})
 
     columns = ['Episode', 'Num Steps', 'Episode Reward', 'Cumulative Reward']
     all_episode_data = pd.DataFrame()
@@ -290,7 +288,7 @@ def train_agent(env, agent, num_episodes):
 
             action = agent.epsilon_greedy(env, current_state)  # Choosing action
             next_state, reward, done = env.step(action)  # Taking action, observing next state, reward
-            agent.update_q_value(current_state, action, reward, next_state)  # Updating Q-Value
+            q_table = agent.update_q_value(current_state, action, reward, next_state)  # Updating Q-Value
             current_state = next_state  # Moving to the next state
 
             episode_reward = episode_reward + reward
@@ -304,9 +302,19 @@ def train_agent(env, agent, num_episodes):
         # Concatenating this episodes data to the all_episode_data dataframe
         all_episode_data = pd.concat([all_episode_data, episode_data.to_frame().T], keys=columns, ignore_index=True)
 
+        # Logging metrics to tensorboard for better visualization
+        writer.add_scalar("Reward/Episode", cumulative_reward, episode)
+        writer.add_scalar("Steps/Episode", num_steps, episode)
+
+    # Calling to training_eval function
+    # print(q_table)
+
     # Logging all_episode_data to csv file
     all_episode_data.columns = columns
     all_episode_data.to_csv('training_data.csv', index=False)
+
+    # Closing out writer for tensorboard
+    writer.close()
 
 
 def evaluate_agent():
@@ -392,13 +400,19 @@ def main():
     """
 
     warnings.filterwarnings("ignore")
+
+    # Creating a directory to store training logs for tensorboard in
+    log_dir = "training_logs/QLearning"
+    writer = SummaryWriter(log_dir=log_dir)
+
     config, actions = configurations()
-    num_episodes = 1000  # Number of training episodes
+    num_episodes = 10000  # Number of training episodes
     env = Environment(config)
     agent = QLearningAgent(config, actions)
 
     # Calling to training loop
-    train_agent(env, agent, num_episodes)
+    train_agent(env, agent, num_episodes, writer)
+    print("Training is complete!")
 
 
 if __name__ == "__main__":
