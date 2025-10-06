@@ -131,11 +131,11 @@ class Environment:
         if action == "clean":
             if self.state_conditions[self.current_state] == "dirty":
                 self.state_conditions[self.current_state] = "clean"  # Updating the current state's condition
-                reward = 10
+                reward = +10
             else:  # Cell is already clean
-                reward = -5
+                reward = -2
         else:  # Moving around
-            reward = 0
+            reward = -0.1
 
         # Getting the next state by calling to the next_state helper function
         next_state = self.next_state(self.current_state, action)
@@ -144,6 +144,7 @@ class Environment:
         done = False
         # Checking for terminal state (all state_conditions == "clean")
         if all(values == "clean" for values in self.state_conditions.values()):
+            reward += 20
             done = True
 
         return next_state, reward, done
@@ -279,7 +280,8 @@ def train_agent(env, agent, num_episodes, writer):
     all_episode_data = pd.DataFrame()
 
     cumulative_reward = 0  # Initializing the cumulative reward during training
-    max_steps = 100  # Initializing max_steps to prevent destabilizing negative rewards
+    cumulative_steps = 0
+    max_steps = 25  # Initializing max_steps to prevent destabilizing negative rewards
 
     # Looping for training episodes 
     for episode in range(num_episodes):
@@ -289,6 +291,7 @@ def train_agent(env, agent, num_episodes, writer):
 
         episode_reward = 0  # Initializing the episode reward during training
         num_steps = 0  # Intializing a counter for number of steps for an episode
+        report_every = 500
 
         while not done and num_steps < max_steps:
 
@@ -302,6 +305,7 @@ def train_agent(env, agent, num_episodes, writer):
             num_steps = num_steps + 1
 
         cumulative_reward = cumulative_reward + episode_reward
+        cumulative_steps = cumulative_steps + num_steps
 
         episode_data = [episode+1, num_steps, episode_reward, cumulative_reward]
         episode_data = pd.Series(episode_data)
@@ -312,6 +316,15 @@ def train_agent(env, agent, num_episodes, writer):
         # Logging metrics to tensorboard for better visualization
         writer.add_scalar("Reward/Episode", episode_reward, episode)
         writer.add_scalar("Steps/Episode", num_steps, episode)
+
+        # inside the episode loop after logging:
+        if (episode + 1) % report_every == 0:
+            # compute last N episode avg reward and avg steps from your stored lists
+            avg_reward = cumulative_reward/ (episode + 1)
+            avg_steps = cumulative_steps / (episode + 1)
+            max_q = np.max(agent.q_table)
+            min_q = np.min(agent.q_table)
+            print(f"episode {episode+1}: avg_reward(last {report_every})={avg_reward:.2f}, avg_steps={avg_steps:.1f}, Qmax={max_q:.2f}, Qmin={min_q:.2f}, eps={agent.epsilon:.3f}")
 
     # Calling to training_eval function
     # print(q_table)
@@ -350,9 +363,9 @@ def configurations():
 
     # Defining Constants - RL agent
     training_parameters = {
-        "learning_rate": 0.5,  # alpha
-        "discount_factor": 0.9,  # gamma
-        "epsilon":  0.8  # used for e-greedy policy (~1 favors exploration and ~0 favors exploitation)
+        "learning_rate": 0.05,  # alpha
+        "discount_factor": 0.7,  # gamma
+        "epsilon":  0.3  # used for e-greedy policy (~1 favors exploration and ~0 favors exploitation)
         # "epsilon_decay": 0.001
     }
 
@@ -407,13 +420,14 @@ def main():
     """
 
     warnings.filterwarnings("ignore")
+    random.seed(0)
 
     # Creating a directory to store training logs for tensorboard in
     log_dir = "training_logs/QLearning"
     writer = SummaryWriter(log_dir=log_dir)
 
     config, actions = configurations()
-    num_episodes = 10000  # Number of training episodes
+    num_episodes = 10000 # Number of training episodes
     env = Environment(config)
     agent = QLearningAgent(config, actions)
 
